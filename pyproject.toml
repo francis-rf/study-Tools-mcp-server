@@ -1,0 +1,57 @@
+[project]
+name = "study-tools-mcp"
+version = "0.1.0"
+description = "MCP server for generating study materials from educational documents"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "mcp[cli]>=0.1.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "PyPDF2>=3.0.0",
+    "pdfplumber>=0.10.0",
+    "python-docx>=1.0.0",
+    "markdown>=3.5.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "tiktoken>=0.5.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "jinja2>=3.1.0",
+]
+
+[project.scripts]
+study-tools-mcp = "study_tools_mcp.server:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true

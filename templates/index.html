@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Tools - AI Study Assistant</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📚 Study Tools AI</h1>
+        <p>Your AI-powered study assistant</p>
+      </header>
+
+      <main>
+        <div class="chat-container">
+          <div id="messages" class="messages"></div>
+          <div class="input-container">
+            <textarea
+              id="user-input"
+              placeholder="Ask me to summarize, create quizzes, explain concepts..."
+              rows="3"
+            ></textarea>
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="tools-panel">
+            <h3>Quick Actions</h3>
+            <button onclick="quickAction('summarize')">
+              📝 Summarize Topic
+            </button>
+            <button onclick="quickAction('quiz')">🎯 Create Quiz</button>
+            <button onclick="quickAction('explain')">💡 Explain Concept</button>
+            <button onclick="quickAction('flashcards')">
+              🗂️ Create Flashcards
+            </button>
+            <button onclick="quickAction('compare')">
+              ⚖️ Compare Concepts
+            </button>
+          </div>
+
+          <div class="options-panel">
+            <h3>Options</h3>
+            <div class="option-group">
+              <label>Quiz Questions:</label>
+              <select id="quiz-count">
+                <option value="3">3 questions</option>
+                <option value="5" selected>5 questions</option>
+                <option value="10">10 questions</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Difficulty:</label>
+              <select id="difficulty">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Flashcards:</label>
+              <select id="flashcard-count">
+                <option value="5">5 cards</option>
+                <option value="10" selected>10 cards</option>
+                <option value="20">20 cards</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="files-panel">
+            <h3>Study Materials</h3>
+            <div id="files-list">Loading...</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/app.js"></script>
+  </body>
+</html>
