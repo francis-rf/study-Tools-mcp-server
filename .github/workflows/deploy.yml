@@ -1,0 +1,49 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/study-tools-mcp-server
+
+            # Pull latest code
+            git pull origin main
+
+            # Stop and remove old container
+            docker stop study-tools-mcp || true
+            docker rm study-tools-mcp || true
+
+            # Rebuild image
+            docker build -t study-tools-mcp .
+
+            # Get secret from Secrets Manager
+            export OPENAI_API_KEY=$(aws secretsmanager get-secret-value \
+              --secret-id study-tools-mcp/openai-api-key \
+              --region us-east-1 \
+              --query SecretString \
+              --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['OPENAI_API_KEY'])")
+
+            # Run new container
+            docker run -d \
+              -p 8080:8080 \
+              -e OPENAI_API_KEY=$OPENAI_API_KEY \
+              -v ~/study-tools-mcp-server/data/notes:/app/data/notes \
+              --name study-tools-mcp \
+              --restart unless-stopped \
+              study-tools-mcp
