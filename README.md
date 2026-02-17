@@ -75,7 +75,110 @@ python app.py
 http://localhost:8080
 ```
 
-## 🐳 Docker Deployment
+## ☁️ AWS Deployment Architecture
+
+**Live URL:** http://54.82.187.91:8080
+
+### Architecture
+
+```
+GitHub Push
+    ↓
+GitHub Actions (CI/CD)
+    ↓ SSH
+EC2 (Ubuntu t2.micro)
+    ↓ pulls PDFs at startup
+S3 Bucket (study-tools-mcp-materials)
+    ↓ fetches API key at runtime
+AWS Secrets Manager (study-tools-mcp/openai-api-key)
+```
+
+### AWS Services Used
+
+| Service | Purpose |
+|---------|---------|
+| **EC2** | Hosts the Docker container (Ubuntu t2.micro) |
+| **S3** | Stores PDF study materials (persists independently of EC2) |
+| **Secrets Manager** | Stores OpenAI API key securely (no .env files on server) |
+| **IAM Role** | Grants EC2 permission to access S3 and Secrets Manager |
+| **GitHub Actions** | Auto-deploys on every push to main branch |
+
+### Deployment Steps
+
+**1. Create S3 bucket and upload PDFs**
+```bash
+# AWS Console → S3 → Create bucket → study-tools-mcp-materials
+aws s3 cp data/notes/ s3://study-tools-mcp-materials/ --recursive
+```
+
+**2. Store API key in Secrets Manager**
+```bash
+# AWS Console → Secrets Manager → Store secret
+# Secret name: study-tools-mcp/openai-api-key
+# Key: OPENAI_API_KEY, Value: your-api-key
+```
+
+**3. Create IAM Role for EC2**
+```
+IAM → Roles → Create role → EC2
+Attach: AmazonS3ReadOnlyAccess + SecretsManagerReadWrite
+Name: study-tools-mcp-ec2-role
+```
+
+**4. Launch EC2 instance**
+```
+Ubuntu t2.micro → Attach IAM role: study-tools-mcp-ec2-role
+Security group: port 22 (SSH) + port 8080 (app) open to 0.0.0.0/0
+```
+
+**5. SSH into EC2 and run the app**
+```bash
+sudo apt update && sudo apt install -y docker.io git
+sudo systemctl start docker
+sudo usermod -aG docker ubuntu
+
+git clone https://github.com/francis-rf/study-tools-mcp-server.git
+cd study-tools-mcp-server
+
+# Pull PDFs from S3
+mkdir -p data/notes
+aws s3 cp s3://study-tools-mcp-materials/ data/notes/ --recursive
+
+# Get API key from Secrets Manager
+export OPENAI_API_KEY=$(aws secretsmanager get-secret-value \
+  --secret-id study-tools-mcp/openai-api-key \
+  --region us-east-1 \
+  --query SecretString \
+  --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['OPENAI_API_KEY'])")
+
+# Build and run
+docker build -t study-tools-mcp .
+docker run -d \
+  -p 8080:8080 \
+  -e OPENAI_API_KEY=$OPENAI_API_KEY \
+  -v $(pwd)/data/notes:/app/data/notes \
+  --name study-tools-mcp \
+  --restart unless-stopped \
+  study-tools-mcp
+```
+
+**6. GitHub Actions CI/CD**
+
+Add these secrets in GitHub → Settings → Secrets → Actions:
+- `EC2_HOST` - EC2 public IP
+- `EC2_USER` - ubuntu
+- `EC2_SSH_KEY` - contents of .pem key file
+
+Every push to `main` automatically SSHes into EC2 and redeploys the container.
+
+### Pause / Cleanup
+
+```
+# Pause: EC2 Console → Instances → Stop instance
+# Full cleanup: Terminate instance → Empty + Delete S3 bucket → Delete secret
+```
+
+## 🐳 Docker (Local)
 
 ### Build and Run
 
