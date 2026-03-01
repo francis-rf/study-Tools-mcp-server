@@ -10,20 +10,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
-COPY pyproject.toml .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY src/ ./src/
 COPY app.py .
 COPY static/ ./static/
 COPY templates/ ./templates/
 
-# Install dependencies
-RUN pip install --no-cache-dir -e .
-
 # Create directories for data and logs
 RUN mkdir -p data/notes logs
-
-# Study materials mount point
-VOLUME /app/data/notes
 
 # Expose the port the app runs on
 EXPOSE 8080

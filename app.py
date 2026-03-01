@@ -17,6 +17,7 @@ from openai import OpenAI
 
 import sys
 import os
+import boto3
 
 from src.study_tools_mcp.config import settings
 from src.study_tools_mcp.utils.logger import get_logger
@@ -39,10 +40,33 @@ mcp_tools = []
 conversations = {}
 
 
+def download_notes_from_s3() -> None:
+    """Download study materials from S3 if S3_BUCKET is configured."""
+    if not settings.S3_BUCKET:
+        return
+    try:
+        s3 = boto3.client("s3", region_name=settings.AWS_REGION)
+        response = s3.list_objects_v2(Bucket=settings.S3_BUCKET)
+        keys = [
+            obj["Key"] for obj in response.get("Contents", [])
+            if obj["Key"].lower().endswith((".pdf", ".md"))
+        ]
+        settings.NOTES_PATH.mkdir(exist_ok=True, parents=True)
+        for key in keys:
+            local_path = settings.NOTES_PATH / Path(key).name
+            s3.download_file(settings.S3_BUCKET, key, str(local_path))
+        logger.info(f"Downloaded {len(keys)} study materials from S3")
+    except Exception as e:
+        logger.error(f"Failed to download from S3: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown"""
     global mcp_session, mcp_tools
+
+    # Download study materials from S3 if configured
+    download_notes_from_s3()
 
     # Startup - Connect to MCP server
     exit_stack = AsyncExitStack()

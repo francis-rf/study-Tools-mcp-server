@@ -1,9 +1,21 @@
 """Configuration management for Study Tools MCP."""
 
 import os
+import json
+import boto3
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 from pydantic_settings import BaseSettings
+
+
+def get_secret(secret_name: str = "study-tools-mcp", region: str = "us-east-1") -> dict:
+    """Fetch secrets from AWS Secrets Manager. Returns {} on failure (falls back to .env)."""
+    try:
+        client = boto3.client("secretsmanager", region_name=region)
+        response = client.get_secret_value(SecretId=secret_name)
+        return json.loads(response["SecretString"])
+    except Exception:
+        return {}
 
 
 class Settings(BaseSettings):
@@ -17,10 +29,14 @@ class Settings(BaseSettings):
     # Server Settings
     HOST: str = "0.0.0.0"
     PORT: int = 8080
-    RELOAD: bool = True
+    RELOAD: bool = False
 
     # API Keys
     OPENAI_API_KEY: str = ""
+
+    # AWS
+    S3_BUCKET: Optional[str] = None
+    AWS_REGION: str = "us-east-1"
 
     # Model Settings
     USE_LOCAL_MODEL: bool = False
@@ -29,14 +45,13 @@ class Settings(BaseSettings):
     MAX_TOKENS: int = 2000
     TEMPERATURE: float = 1.0
 
-    # Paths
-    BASE_DIR: Path = Path(__file__).parent.parent.parent
-    SRC_DIR: Path = Path(__file__).parent.parent
-    DATA_DIR: Path = BASE_DIR / "data"
-    NOTES_PATH: Path = BASE_DIR / "data" / "notes"
-    LOGS_DIR: Path = BASE_DIR / "logs"
-    STATIC_DIR: Path = BASE_DIR / "static"
-    TEMPLATES_DIR: Path = BASE_DIR / "templates"
+    # Paths — relative so they work both locally and in Docker
+    BASE_DIR: Path = Path(".")
+    DATA_DIR: Path = Path("data")
+    NOTES_PATH: Path = Path("data/notes")
+    LOGS_DIR: Path = Path("logs")
+    STATIC_DIR: Path = Path("static")
+    TEMPLATES_DIR: Path = Path("templates")
 
     # Study Tools Defaults
     DEFAULT_QUIZ_QUESTIONS: int = 5
@@ -62,12 +77,6 @@ class Settings(BaseSettings):
 
     @classmethod
     def validate(cls) -> bool:
-        """Validate configuration"""
-        instance = cls()
-
-        # OPENAI_API_KEY is optional for MCP mode
-        # Only required for web UI standalone mode
-
         return True
 
     @classmethod
@@ -81,9 +90,14 @@ class Settings(BaseSettings):
         print(f"Model:        {instance.DEFAULT_MODEL}")
         print(f"Temperature:  {instance.TEMPERATURE}")
         print(f"Notes Path:   {instance.NOTES_PATH}")
-        print(f"Logs Dir:     {instance.LOGS_DIR}")
+        print(f"S3 Bucket:    {instance.S3_BUCKET or 'Not set (using local)'}")
         print("=" * 60)
 
+
+# Load secrets from Secrets Manager and inject into env before Settings loads
+_secrets = get_secret()
+if _secrets.get("OPENAI_API_KEY") and not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = _secrets["OPENAI_API_KEY"]
 
 # Global settings instance
 settings = Settings()
