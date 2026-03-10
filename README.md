@@ -5,11 +5,10 @@
 ![MCP](https://img.shields.io/badge/MCP-Server-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![CI/CD](https://github.com/francis-rf/study-Tools-mcp-server/actions/workflows/deploy.yml/badge.svg)](https://github.com/francis-rf/study-Tools-mcp-server/actions/workflows/deploy.yml)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-AWS%20EC2-orange?logo=amazonaws)](http://3.230.151.202:8080/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-AWS%20EC2-orange?logo=amazonaws)]](http://3.231.93.34:8080/)
 
 An AI-powered study assistant built with Model Context Protocol (MCP) that generates quizzes, flashcards, summaries, and concept explanations from your study materials.
 
-> **Live Demo:** [http://3.230.151.202:8080/](http://3.230.151.202:8080/)
 
 ## 🎯 Features
 
@@ -106,11 +105,6 @@ docker run -p 8080:8080 --env-file .env study-tools-mcp
 3. Launch **EC2** instance with IAM role attached (`study-tools-mcp-ec2-role`)
 4. SSH in, install Docker, clone repo and run container
 
-### Live URL
-
-The app is deployed and accessible at:
-
-**[http://3.230.151.202:8080/](http://3.230.151.202:8080/)**
 
 ## ⚙️ GitHub Actions CI/CD
 
